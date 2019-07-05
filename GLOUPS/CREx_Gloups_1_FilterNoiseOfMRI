@@ -1,0 +1,33 @@
+function CREx_Gloups_1_FilterNoiseOfMRI
+    % Example of FilterNoise implementation for SPM12
+    % Author: Valérie Chanoine, Research Engineer at Institute of Language, Communication and the Brain
+    % (http://www.ilcb.fr/)
+    % Date: July 4, 2019
+
+    close all; clear all; clc;
+    
+    % Initialise SPM
+    spm('defaults','fmri');  
+    spm_jobman('initcfg');
+    
+    % Get anatomical MRI and make it isotropic (voxel size = 1mm x 1mm x 1mm)
+    anatDir = '/home/chanoine/Documents/Gloups/databases/db_mri/sub-01/anat/';
+    mri_original = fullfile(anatDir, 'sub-01.nii');
+    mri_resliced = fullfile(anatDir, 'sub-01_bv.nii'); 
+    voxel_size = [1 1 1];
+    
+    reslice_nii(mri_original, mri_resliced, voxel_size);
+     
+    % Filtering for denoising using CAT12
+    % Module: Spatially adaptative non-local means denoising filter
+    clear matlabbatch;
+    matlabbatch{1}.spm.tools.cat.tools.sanlm.data = {mri_resliced};
+    matlabbatch{1}.spm.tools.cat.tools.sanlm.spm_type = 16;
+    matlabbatch{1}.spm.tools.cat.tools.sanlm.prefix = '';
+    matlabbatch{1}.spm.tools.cat.tools.sanlm.nlmfilter.optimized.NCstr = -Inf;
+   
+    save(fullfile(anatDir, 'CREX_SPM12_matlabbatch_T1Filtering.mat'),'matlabbatch'); 
+    
+    spm_jobman('initcfg');
+    spm_jobman('run',matlabbatch);
+end
